@@ -1,0 +1,12 @@
+{
+    "name": "libjs",
+    "version": "0.57.0",
+    "scripts": {
+        "update:all": "pnpm update --recursive --latest --interactive"
+    },
+    "type": "module",
+    "devDependencies": {
+        "@types/node": "^22.3.0",
+        "typescript": "^5.5.4"
+    }
+}
