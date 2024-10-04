@@ -51,7 +51,7 @@ function LOG(message: string | unknown, vars?: any, variant: consoleVariant = "l
     if (message) fullString += message;
 
     if (vars) {
-        var varsString: string[] | string = [];
+        var varsString: Array<string> | string = [];
         const varsKeys = Object.keys(vars);
 
         for (let i = 0; i < varsKeys.length; i++) {
@@ -76,17 +76,9 @@ function LOG(message: string | unknown, vars?: any, variant: consoleVariant = "l
 }
 
 
-async function readFileData(filePath: string, encoding?: string): Promise<Buffer | string | null> {
-    try {
-        const data: string | any = await fs.promises.readFile(filePath, { encoding: encoding });
-        return data;
-    } catch (error: any) {
-        if (error.code === "ENOENT") {
-            return null;
-        } else {
-            throw error; // re-throw the error unchanged if it's not a 'ENOENT' error
-        }
-    }
+async function readFileData(filePath: string, encoding?: BufferEncoding): Promise<Buffer | string> {
+    const data: Buffer | string = await fs.promises.readFile(filePath, { encoding });
+    return data;
 }
 
 
@@ -98,7 +90,7 @@ async function deleteDirectoryContents(dirPath: string): Promise<void> {
         return;
     }
 
-    const _coreFn = async (dirPath: string): Promise<void> => {
+    const deleteDir = async (dirPath: string): Promise<void> => {
         const files = await fs.promises.readdir(dirPath);
 
         for (const file of files) {
@@ -106,7 +98,7 @@ async function deleteDirectoryContents(dirPath: string): Promise<void> {
             const stats = await fs.promises.stat(filePath);
 
             if (stats.isDirectory()) {
-                await _coreFn(filePath);
+                await deleteDir(filePath);
                 await fs.promises.rmdir(filePath);
             } else {
                 await fs.promises.unlink(filePath);
@@ -114,18 +106,18 @@ async function deleteDirectoryContents(dirPath: string): Promise<void> {
         }
     };
 
-    await _coreFn(dirPath);
+    await deleteDir(dirPath);
     LOG(`Deleted contents of directory: ${Ansi.set("cyan", dirPath)}`);
 }
 
 
-function getHash(data: Buffer, algorithm: string = "sha256"): Buffer {
-    return crypto.createHash(algorithm).update(data).digest();
+async function getHashOfArrayBuffer(buffer: ArrayBuffer, algorithm: string = "SHA-256"): Promise<ArrayBuffer> {
+    return await crypto.subtle.digest(algorithm, buffer);
 }
 
 
-async function getFileHash(filePath: string, algorithm: string = "sha256"): Promise<Buffer> {
-    return getHash(await readFileData(filePath) as Buffer, algorithm);
+async function getFileHash(filePath: string, algorithm: string = "SHA-256"): Promise<ArrayBuffer> {
+    return await getHashOfArrayBuffer(await readFileData(filePath) as ArrayBuffer, algorithm);
 }
 
 
@@ -134,8 +126,8 @@ async function copyFile(srcPath: string, destPath: string): Promise<void> {
 }
 
 
-async function copyDir(src: string, dest: string, exclude: string[] = [], isRootCall = true): Promise<number> {
-    let filesCount: number = 0; // Counter for the number of files copied
+async function copyDir(src: string, dest: string, exclude: Array<string> = [], isRootCall = true): Promise<number> {
+    let filesCount: number = 0;
 
     const entries = await fs.promises.readdir(src, { withFileTypes: true });
     await fs.promises.mkdir(dest, { recursive: true }).catch(() => {});
@@ -149,9 +141,8 @@ async function copyDir(src: string, dest: string, exclude: string[] = [], isRoot
             const copiedInSubdir: number = await copyDir(srcPath, destPath, exclude, false);
             filesCount += copiedInSubdir; // Add the count from the subdirectory
         } else if (entry.isFile() && !exclude.includes(path.extname(entry.name))) {
-            // Copy file if it's not excluded
             await copyFile(srcPath, destPath);
-            filesCount++; // Increment the counter
+            filesCount++;
         }
     }
 
@@ -164,19 +155,10 @@ async function copyDir(src: string, dest: string, exclude: string[] = [], isRoot
 
 
 async function syncDir(src: string, dest: string): Promise<void> {
-    interface Operations {
-        filesToCopy: {
-            srcPath: string;
-            destPath: string;
-        }[];
-        filesToDelete: string[];
-        dirsToCreate: string[];
-    }
-
-    const operations: Operations = {
-        filesToCopy: [],
-        filesToDelete: [],
-        dirsToCreate: []
+    const operations = {
+        filesToCopy: <Array<{ srcPath: string, destPath: string }>> [],
+        filesToDelete: <Array<string>> [],
+        dirsToCreate: <Array<string>> []
     };
 
     // Define a recursive function to populate operations
@@ -249,15 +231,15 @@ async function renameFile(filePath: string, newName: string): Promise<void> {
 }
 
 // CLI Runner
-async function executeCommands(commands: string[]): Promise<void> {
+async function executeCommands(commands: Array<string>): Promise<void> {
     for (const command of commands) {
         await new Promise<void>((resolve, reject) => {
             LOG(`${Ansi.color.magenta}Executing command: ${command} ${Ansi.reset}`);
             const proc = spawn(command, [], { shell: true, stdio: "inherit" });
 
             proc.on("close", (code) => {
-                LOG(`${Ansi.color.magenta}Execution ended | code: ${code} ${Ansi.reset}`);
-                code !== 0 ? reject(`Failure while executing command.`) : resolve();
+                LOG(`${Ansi.color.magenta}Execution ended: ${code} ${Ansi.reset}`);
+                code !== 0 ? reject(`Failure while executing command`) : resolve();
             });
         });
     }
@@ -275,14 +257,14 @@ async function executeCommands(commands: string[]): Promise<void> {
 
 
 // Compressor
-async function compressDirectory(dirPath: string, exclude: string[], method: string, level: number, minRatio: number): Promise<void> {
+async function compressDirectory(dirPath: string, exclude: Array<string>, method: string, level: number, minRatio: number): Promise<void> {
     exclude = [".gz", ".br", ".def", ...exclude];
 
     const ct0: [number, number] = process.hrtime();
     let compressedFilesCount: number = 0;
-    let notCompressed: string[] = [];
+    let notCompressed: Array<string> = [];
 
-    const _coreFn = async (dirPath: string, exclude: string[], method: string, level: number, minRatio: number) => {
+    const _coreFn = async (dirPath: string, exclude: Array<string>, method: string, level: number, minRatio: number) => {
         const files = await fs.promises.readdir(dirPath);
 
         const compressFile = async (filePath: string, method: string, level: number, minRatio: number) => {
@@ -334,10 +316,10 @@ async function compressDirectory(dirPath: string, exclude: string[], method: str
 }
 
 
-async function listFiles(dirPath: string = ".", exclude: string[] = []): Promise<string[]> {
-    let omittedFiles: string[] = [];
+async function listFiles(dirPath: string = ".", exclude: Array<string> = []): Promise<{ listed: Array<string>, excluded: Array<string> }> {
+    const excluded: Array<string> = [];
 
-    const checkIfInExc = (string: string, array: string[]) => {
+    const checkIfInExc = (string: string, array: Array<string>) => {
         for (const element of array) {
             if (string.includes(element)) return true;
         }
@@ -345,18 +327,18 @@ async function listFiles(dirPath: string = ".", exclude: string[] = []): Promise
         return false;
     };
 
-    const _coreFn = async (dirPath: string, exclude: string[]): Promise<string[]> => {
-        let files: string[] = [];
+    const listFilesInDir = async (dirPath: string, exclude: Array<string>): Promise<Array<string>> => {
+        let files: Array<string> = [];
 
         if (fs.existsSync(dirPath)) {
-            const items: string[] = await fs.promises.readdir(dirPath);
+            const items: Array<string> = await fs.promises.readdir(dirPath);
 
             for (const item of items) {
                 if (item !== "." && item !== ".." && !checkIfInExc(item, exclude)) {
                     const path = dirPath + "/" + item;
 
                     if (fs.lstatSync(path).isDirectory()) {
-                        const subFiles = await _coreFn(path, exclude);
+                        const subFiles = await listFilesInDir(path, exclude);
 
                         for (const subFile of subFiles) {
                             files.push(item + "/" + subFile);
@@ -365,7 +347,7 @@ async function listFiles(dirPath: string = ".", exclude: string[] = []): Promise
                         files.push(item);
                     }
                 } else if (checkIfInExc(item, exclude)) {
-                    omittedFiles.push(item);
+                    excluded.push(item);
                 }
             }
         }
@@ -373,10 +355,9 @@ async function listFiles(dirPath: string = ".", exclude: string[] = []): Promise
         return files;
     };
 
-    let listedFiles: string[] = await _coreFn(dirPath, exclude);
+    const listed: Array<string> = (await listFilesInDir(dirPath, exclude)).map((path) => "/" + path);
 
-    LOG(`Generated array of files in: ${Ansi.set("cyan", dirPath)} | array length: ${listedFiles.length} | ${Ansi.color.yellow}omitted: ${omittedFiles.join(", ")}`);
-    return listedFiles;
+    return { listed, excluded };
 }
 
 
@@ -392,43 +373,16 @@ async function writeObjectToFile(object: object | string | number, filePath: str
 }
 
 
-async function generateFileHashes(dirPath: string, excludeFiles: string[], algorithm: string = "sha256", encoding: BinaryToTextEncoding = "base64"): Promise<{ fileHashesList: Array<Array<string>>, hashesBufferList: Array<Buffer>}> {
-    const filesList: Array<string> = await listFiles(dirPath, excludeFiles);
-    const fileHashesList: Array<Array<string>> = [];
-    const hashesBufferList: Array<Buffer> = [];
+async function generateFileHashPairs(dirPath: string, filesList: Array<string>, algorithm: string = "SHA-256"): Promise<Array<[string, ArrayBuffer]>> {
+    const fileHashPairs: Array<[string, ArrayBuffer]> = [];
 
-    for (let i = 0; i < filesList.length; i++) {
-        const file = "/" + filesList[i];   // "/" root relative url
-        const hash: Buffer = await getFileHash(`${dirPath}/${file}`, algorithm) as Buffer;
-
-        hashesBufferList.push(hash);
-        fileHashesList.push([file, hash.toString(encoding)]);
+    for (const file of filesList) {
+        fileHashPairs.push([file, await getFileHash(dirPath + file, algorithm)]);
     }
 
-    return {
-        fileHashesList,
-        hashesBufferList
-    };
+    return fileHashPairs;
 }
 
-
-function compareKeysHashesLists(listA: any, listB: any): boolean {
-    const map1 = new Map(listA);
-    const map2 = new Map(listB);
-
-    if (map1.size !== map2.size) {
-        return false;
-    }
-
-    for (const [file, hash] of map1) {
-        if (map2.get(file) !== hash) {
-            // LOG(`hash mismatch: ${file}`)
-            return false; // Mismatch found.
-        }
-    }
-
-    return true;
-}
 
 
 // async function deleteEmptyDirectories(dirPath) {
@@ -534,7 +488,7 @@ function compareKeysHashesLists(listA: any, listB: any): boolean {
 // }
 
 
-function getFilesRecursively(directory: string): string[] {
+function getFilesRecursively(directory: string): Array<string> {
     let files = [];
 
     try {
@@ -556,7 +510,7 @@ function getFilesRecursively(directory: string): string[] {
 }
 
 
-function replaceStringsInFiles(filePaths: string[], replacements: [string, string][]): unknown[] {
+function replaceStringsInFiles(filePaths: Array<string>, replacements: [string, string][]): unknown[] {
     const modifiedFiles = new Set();
 
     for (const filePath of filePaths) {
@@ -602,22 +556,22 @@ function trimEndlinesFromFile(filePath: string, keyword: string) {
 
     fs.writeFileSync(filePath, result, "utf8");
 
-    LOG(`Trimmed endlines from file: ${path.basename(filePath)} | keyword: ${keyword}`);
+    LOG(`Trimmed endlines from file: ${path.basename(filePath)} [keyword: ${keyword}]`);
 }
 
 
-function generateMerkleRoot(hashes: Array<Buffer>, algorithm: string = "sha256"): Buffer {
+async function generateMerkleRoot(hashes: Array<ArrayBuffer>, algorithm: string = "SHA-256"): Promise<ArrayBuffer> {
     if (hashes.length === 0) {
         throw new Error("Cannot generate Merkle root from zero length array");
     }
 
     while (hashes.length > 1) {
-        let nextLevel: Array<Buffer> = [];
+        const nextLevel: Array<ArrayBuffer> = [];
 
         for (let i = 0; i < hashes.length; i += 2) {
-            const hash0: Buffer = hashes[i];
-            const hash1: Buffer = hashes[i + 1] || hashes[i]; // If there's no pair for the last hash, duplicate it.
-            const combinedHash: Buffer = getHash(Buffer.concat([hash0, hash1]), algorithm);
+            const hash0: ArrayBuffer = hashes[i];
+            const hash1: ArrayBuffer = hashes[i + 1] || hashes[i]; // If there's no pair for the last hash, duplicate it.
+            const combinedHash: ArrayBuffer = await getHashOfArrayBuffer(concatArrayBuffers(hash0, hash1), algorithm);
 
             nextLevel.push(combinedHash);
         }
@@ -643,12 +597,12 @@ export {
     compressDirectory,
     listFiles,
     writeObjectToFile,
-    generateFileHashes,
-    compareKeysHashesLists,
+    generateFileHashPairs,
     // rebaseFileNames,
     // replaceStringsInFiles,
     trimEndlinesFromFile,
     getFilesRecursively,
     replaceStringsInFiles,
-    generateMerkleRoot
+    generateMerkleRoot,
+    getHashOfArrayBuffer
 };

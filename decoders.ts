@@ -1,40 +1,100 @@
-import  { buffersAreEqual } from "./moduleA.js";
+import { arraysAreEqual } from "./moduleA.js";
+import { getHashOfArrayBuffer } from "./moduleB.js";
+import { hashOutputLengths } from "./constants.js";
 
-export async function decodeDataWithIntegrity(encodedBuffer: ArrayBuffer, hashFunction: string = "SHA-256") {
-    const logPrefix: string = "Failure while decoding data with integrity:";
 
-    const hashLengths: { [key: string]: number } = {
-        "SHA-1": 20,
-        "SHA-256": 32,
-        "SHA-384": 48,
-        "SHA-512": 64
-    };
+async function decodeDataWithIntegrity(encodedData: ArrayBuffer): Promise<ArrayBuffer> {
+    try {
+        if (!(encodedData instanceof ArrayBuffer)) {
+            throw new TypeError("input must be an ArrayBuffer");
+        }
 
-    const hashLength = hashLengths[hashFunction];
-    if (!hashLength) {
-        throw new Error(`${logPrefix} unsupported hash function < ${hashFunction} >`);
+        const encodedDataView: DataView = new DataView(encodedData);
+        const lengthOfData: number = encodedDataView.getUint32(0, false);
+        const hashFlag: number = encodedDataView.getUint8(4);
+
+        let hashAlgorithm: string | null = null;
+        switch (hashFlag) {
+            case 0:
+                hashAlgorithm = "SHA-1";
+                break;
+            case 1:
+                hashAlgorithm = "SHA-256";
+                break;
+            case 2:
+                hashAlgorithm = "SHA-384";
+                break;
+            case 3:
+                hashAlgorithm = "SHA-512";
+                break;
+            default:
+                throw new Error("invalid hash flag");
+        }
+
+        const hashLength: number = hashOutputLengths[hashAlgorithm];
+
+        // 4 -> uint32 indicating the byteLength of encoded data | 1 -> uint8 indicating hashFlag | hashLength | 1 -> minimum byteLength data that encoder accepts
+        const minimumByteLength = 4 + 1 + hashLength + 1;
+        if (encodedData.byteLength < minimumByteLength) {
+            throw new Error("invalid length of input");
+        }
+
+        const hashOfData: Uint8Array = new Uint8Array(encodedData, 5, hashLength);
+        const data: Uint8Array = new Uint8Array(encodedData, 5 + hashLength);
+        const decodedBuffer: ArrayBuffer = new ArrayBuffer(data.byteLength);
+        new Uint8Array(decodedBuffer).set(data);
+
+        if (data.byteLength !== lengthOfData) {
+            throw new Error("length mismatch");
+        }
+
+        const computedHashOfData: Uint8Array = new Uint8Array(await getHashOfArrayBuffer(data, hashAlgorithm));
+
+        if (!arraysAreEqual(hashOfData, computedHashOfData)) {
+            throw new Error("hash mismatch");
+        }
+
+        return decodedBuffer;
+    } catch (err) {
+        throw new Error("Data decoding failure (integrity)", { cause: err });
     }
+}
 
-    const minimumLength = 4 + hashLength + 1; // Bytes explain: 4 -> uint32 indicating the length of encoded data, 1 -> minimum data that encoder accepts.
 
-    if (!(encodedBuffer instanceof ArrayBuffer) || encodedBuffer.byteLength < minimumLength) {
-        throw new TypeError(`${logPrefix} encoded data must be an ArrayBuffer and at least ${minimumLength} bytes long`);
+async function decodeHashIndex(encodedHashIndex: ArrayBuffer): Promise<Array<[string, Uint8Array]>> {
+    try {
+        encodedHashIndex = await decodeDataWithIntegrity(encodedHashIndex);
+
+        const encodedHashIndexView: DataView = new DataView(encodedHashIndex);
+        const textDecoder: TextDecoder = new TextDecoder("UTF-8", { fatal: true });
+        const decodedData: Array<[string, Uint8Array]> = [];
+        const hashLength: number = encodedHashIndexView.getUint16(0, false);
+        let offset: number = 2;
+
+
+        while (offset < encodedHashIndex.byteLength) {
+            const filePathLength: number = encodedHashIndexView.getUint16(offset, false);
+            offset += 2;
+
+            const filePathBuffer: Uint8Array = new Uint8Array(encodedHashIndex, offset, filePathLength);
+            const filePath: string = textDecoder.decode(filePathBuffer);
+            offset += filePathLength;
+
+            const hash: Uint8Array = new Uint8Array(encodedHashIndex, offset, hashLength);
+            offset += hashLength;
+
+            decodedData.push([filePath, hash]);
+        }
+
+        return decodedData;
+    } catch (err) {
+        throw new Error("Hash Index decoding failure", { cause: err });
     }
+}
 
-    const encodedData: Uint8Array = new Uint8Array(encodedBuffer);
-    const length: number = new DataView(encodedBuffer).getUint32(0, false);
-    const hash: ArrayBuffer = encodedData.subarray(4, 4 + hashLength).buffer;
-    const data: ArrayBuffer = encodedData.subarray(4 + hashLength).buffer;
 
-    if (data.byteLength !== length) {
-        throw new Error(`${logPrefix} data length mismatch`);
-    }
 
-    const computedHash = new Uint8Array(await crypto.subtle.digest(hashFunction, data));
-
-    if (!buffersAreEqual(hash, computedHash)) {
-        throw new Error(`${logPrefix} data integrity check failed`);
-    }
-
-    return data;
+export {
+    decodeDataWithIntegrity,
+    decodeHashIndex
 }

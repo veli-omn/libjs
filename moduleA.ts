@@ -164,7 +164,7 @@ const sleep = (duration: number): Promise<void> => new Promise((resolve) => setT
 // }
 
 
-const getRandomBit = (): number => crypto.getRandomValues(new Int8Array(1))[0] & 1;
+const getRandomBit = (): number => crypto.getRandomValues(new Uint8Array(1))[0] & 1;
 
 
 function getRandomInt(min: number, max: number): number {
@@ -266,7 +266,9 @@ function deepReplaceInArray(arr: Array<unknown>, searchValue: unknown, replaceVa
 
     for (let i = 0; i < arr.length; i++) {
         if (Array.isArray(arr[i])) {
-            deepReplaceInArray(arr[i] as Array<unknown>, searchValue, replaceValue);
+            replaced += deepReplaceInArray(arr[i] as Array<unknown>, searchValue, replaceValue, firstOnly);
+
+            if (firstOnly && replaced > 0) break;
         } else if (arr[i] === searchValue) {
             arr[i] = replaceValue;
             replaced++;
@@ -278,30 +280,60 @@ function deepReplaceInArray(arr: Array<unknown>, searchValue: unknown, replaceVa
     return replaced;
 }
 
-function concatArrayBuffers(...bufs: Array<ArrayBuffer>): ArrayBuffer {
-    const byteArray: Array<number> = [];
 
-    // Accumulate all bytes from the buffers.
+function concatArrayBuffers(...bufs: Array<ArrayBuffer>): ArrayBuffer {
+    let concatedLength: number = 0;
+
     for (const buf of bufs) {
-        byteArray.push(...new Uint8Array(buf));
+        concatedLength += buf.byteLength;
     }
 
-    return new Uint8Array(byteArray).buffer;
+    const concatedUint8Array: Uint8Array = new Uint8Array(concatedLength);
+    let offset: number = 0;
+
+    for (const buf of bufs) {
+        const buffersUint8View: Uint8Array = new Uint8Array(buf);
+
+        concatedUint8Array.set(buffersUint8View, offset);
+        offset += buffersUint8View.byteLength;
+    }
+
+    return concatedUint8Array.buffer;
 }
 
 
-function buffersAreEqual(buffer0: ArrayBuffer, buffer1: ArrayBuffer): boolean {
-    if (buffer0.byteLength !== buffer1.byteLength) return false;
+function arraysAreEqual(array0: ArrayLike<unknown>, array1: ArrayLike<unknown>): boolean {
+    if (array0.length !== array1.length) return false;
 
-    const buffer0Uint8 = new Uint8Array(buffer0);
-    const buffer1Uint8 = new Uint8Array(buffer1);
-
-    for (let i = 0; i < buffer0.byteLength; i++) {
-        if (buffer0Uint8[i] !== buffer1Uint8[i]) return false;
+    for (let i = 0; i < array0.length; i++) {
+        if (array0[i] !== array1[i]) return false;
     }
 
     return true;
 }
+
+
+function mapsAreEqual(map0: any, map1: any): boolean {
+    if (map0.size !== map1.size) {
+        return false;
+    }
+
+    for (const [file, hash] of map0) {
+        if (map1.get(file) !== hash) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+function arrayBufferToHex(buffer: ArrayBuffer): string {
+    return [...new Uint8Array(buffer)]
+        .map(x => x.toString(16).padStart(2, "0"))
+        .join("");
+}
+
 
 export {
     Ansi,
@@ -325,5 +357,6 @@ export {
     roundUpToMultiple,
     deepReplaceInArray,
     concatArrayBuffers,
-    buffersAreEqual
+    arraysAreEqual,
+    arrayBufferToHex
 };

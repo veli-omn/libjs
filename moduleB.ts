@@ -484,7 +484,7 @@ async function generateMerkleRoot(hashes: Array<ArrayBuffer>, algorithm: Algorit
     }
 
     while (hashes.length > 1) {
-        let nextLevel: Array<ArrayBuffer> = [];
+        const nextLevel: Array<ArrayBuffer> = [];
 
         for (let i = 0; i < hashes.length; i += 2) {
             const hash0: ArrayBuffer = hashes[i];
