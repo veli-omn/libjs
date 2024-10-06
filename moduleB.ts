@@ -478,6 +478,16 @@ async function getHashOfArrayBuffer(buffer: ArrayBuffer, algorithm: AlgorithmIde
 }
 
 
+async function getResponseHash(response: Response, algorithm: string = "SHA-256"): Promise<ArrayBuffer> {
+    if (!(response instanceof Response)) throw new Error("failed to get hash of response: invalid response object");
+
+    const responseCloneBuffer: ArrayBuffer = await response.clone().arrayBuffer();
+    const hashBuffer: ArrayBuffer = await getHashOfArrayBuffer(responseCloneBuffer, algorithm);
+
+    return hashBuffer;
+}
+
+
 async function generateMerkleRoot(hashes: Array<ArrayBuffer>, algorithm: AlgorithmIdentifier = "SHA-256"): Promise<ArrayBuffer> {
     if (hashes.length === 0) {
         throw new Error("Cannot generate Merkle root from zero length array");
@@ -514,5 +524,6 @@ export {
     STORAGE,
     HideCursorHandler,
     getHashOfArrayBuffer,
+    getResponseHash,
     generateMerkleRoot
 };
