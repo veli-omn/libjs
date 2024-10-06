@@ -281,32 +281,35 @@ function deepReplaceInArray(arr: Array<unknown>, searchValue: unknown, replaceVa
 }
 
 
-function concatArrayBuffers(...bufs: Array<ArrayBuffer>): ArrayBuffer {
-    let concatedLength: number = 0;
+function concatArrayBuffers(...buffers: Array<ArrayBuffer>): ArrayBuffer {
+    let concatedByteLength: number = 0;
 
-    for (const buf of bufs) {
-        concatedLength += buf.byteLength;
+    for (const buff of buffers) {
+        concatedByteLength += buff.byteLength;
     }
 
-    const concatedUint8Array: Uint8Array = new Uint8Array(concatedLength);
+    const concatedUint8Array: Uint8Array = new Uint8Array(concatedByteLength);
     let offset: number = 0;
 
-    for (const buf of bufs) {
-        const buffersUint8View: Uint8Array = new Uint8Array(buf);
+    for (const buff of buffers) {
+        const buffUint8View: Uint8Array = new Uint8Array(buff);
 
-        concatedUint8Array.set(buffersUint8View, offset);
-        offset += buffersUint8View.byteLength;
+        concatedUint8Array.set(buffUint8View, offset);
+        offset += buffUint8View.byteLength;
     }
 
     return concatedUint8Array.buffer;
 }
 
 
-function arraysAreEqual(array0: ArrayLike<unknown>, array1: ArrayLike<unknown>): boolean {
-    if (array0.length !== array1.length) return false;
+function arraysAreEqual(array0: ArrayLike<unknown> | ArrayBuffer, array1: ArrayLike<unknown> | ArrayBuffer): boolean {
+    if (array0 instanceof ArrayBuffer) array0 = new Uint8Array(array0);
+    if (array1 instanceof ArrayBuffer) array1 = new Uint8Array(array1);
 
-    for (let i = 0; i < array0.length; i++) {
-        if (array0[i] !== array1[i]) return false;
+    if ((array0 as ArrayLike<unknown>).length !== (array1 as ArrayLike<unknown>).length) return false;
+
+    for (let i = 0; i < (array0 as ArrayLike<unknown>).length; i++) {
+        if ((array0 as ArrayLike<unknown>)[i] !== (array1 as ArrayLike<unknown>)[i]) return false;
     }
 
     return true;
