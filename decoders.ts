@@ -61,13 +61,13 @@ async function decodeDataWithIntegrity(encodedData: ArrayBuffer): Promise<ArrayB
 }
 
 
-async function decodeHashIndex(encodedHashIndex: ArrayBuffer): Promise<Array<[string, Uint8Array]>> {
+async function decodeHashIndex(encodedHashIndex: ArrayBuffer): Promise<Array<[string, ArrayBuffer]>> {
     try {
         encodedHashIndex = await decodeDataWithIntegrity(encodedHashIndex);
 
         const encodedHashIndexView: DataView = new DataView(encodedHashIndex);
         const textDecoder: TextDecoder = new TextDecoder("UTF-8", { fatal: true });
-        const decodedData: Array<[string, Uint8Array]> = [];
+        const decodedData: Array<[string, ArrayBuffer]> = [];
         const hashLength: number = encodedHashIndexView.getUint16(0, false);
         let offset: number = 2;
 
@@ -81,9 +81,11 @@ async function decodeHashIndex(encodedHashIndex: ArrayBuffer): Promise<Array<[st
             offset += filePathLength;
 
             const hash: Uint8Array = new Uint8Array(encodedHashIndex, offset, hashLength);
+            const hashBuffer = new ArrayBuffer(hash.byteLength);
+            new Uint8Array(hashBuffer).set(hash);
             offset += hashLength;
 
-            decodedData.push([filePath, hash]);
+            decodedData.push([filePath, hashBuffer]);
         }
 
         return decodedData;

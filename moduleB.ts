@@ -137,19 +137,6 @@ class InlineWorker {
 // }
 
 
-async function genCacheKeysNamesHash(cacheName: string): Promise<string> {
-    const stringOfURLs = (await (await caches.open(cacheName)).keys()).reduce((string, key) => string + key.url, "");
-    let hash = 0;
-
-    for (let i = 0; i < stringOfURLs.length; i++) {
-        hash = (hash << 5) - hash + stringOfURLs.charCodeAt(i);
-        hash |= 0;
-    }
-
-    return hash.toString(32);
-}
-
-
 // class MultipleClicksDetector {
 //     constructor(element, clicksToDetect, callback) {
 //         this.element = element;
@@ -518,7 +505,6 @@ export {
     InlineWorker,
     // navAndOpen,
     // clickedOutClose,
-    genCacheKeysNamesHash,
     SwipeDetector,
     ScreenWakeLock,
     STORAGE,
