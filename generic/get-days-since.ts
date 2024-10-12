@@ -1,4 +1,4 @@
-export function daysSince(formattedDate: string): number {
+export function getDaysSince(formattedDate: string): number {
     const [day, month, year]: number[] = formattedDate.split("/").map((el) => parseInt(el));
     const date: Date = new Date(year, month - 1, day);
     const today: Date = new Date();
