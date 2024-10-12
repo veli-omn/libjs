@@ -3,7 +3,7 @@ import { getHashOfArrayBuffer } from "./get-hash-of-array-buffer.js";
 import { concatArrayBuffers } from "../generic/concat-array-buffers.js";
 
 
-export async function genMerkleRoot(hashes: Array<ArrayBuffer>, algorithm: AlgorithmIdentifier = "SHA-256", orderDependant: boolean = true): Promise<ArrayBuffer> {
+export async function genMerkleRoot(hashes: Array<ArrayBuffer>, algorithm: AlgorithmIdentifier = "SHA-256", orderDependant: boolean = false): Promise<ArrayBuffer> {
     if (hashes.length === 0) {
         throw new Error("Cannot generate Merkle root from zero length array");
     }
