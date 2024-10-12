@@ -1,0 +1,1 @@
+const getRandomBit = (): number => crypto.getRandomValues(new Uint8Array(1))[0] & 1;

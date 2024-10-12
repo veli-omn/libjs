@@ -114,6 +114,9 @@
         // "allowImportingTsExtensions": true
     },
     "include": [
-        "./*"
+        "./**/*"
     ],
+    "exclude": [
+        "/node"
+    ]
 }
