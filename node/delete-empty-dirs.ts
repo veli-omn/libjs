@@ -4,32 +4,30 @@ import { ANSI } from "../generic/ansi.js";
 import { LOG } from "../generic/log.js";
 
 
-// TODO: Finish this function, and export it.
-
-async function deleteEmptyDirectories(dirPath: string) {
+export async function deleteEmptyDirs(dirPath: string) {
     let deleted: Array<string> = [];
 
     const performDirDeletion = async (dirPath: string) => {
-        const files = await fs.promises.readdir(dirPath);
-        // If the directory is empty, delete it
+        const files: Array<string> = await fs.promises.readdir(dirPath);
+        // If the directory is empty, delete it.
         if (files.length === 0) {
             await fs.promises.rmdir(dirPath);
             deleted.push(dirPath);
             return;
         }
 
-        // Iterate through the files/directories in the current directory
+        // Iterate through the files/directories in the current directory.
         for (const file of files) {
-            const filePath = path.join(dirPath, file);
-            const isDir = (await fs.promises.stat(filePath)).isDirectory();
+            const filePath: string = path.join(dirPath, file);
+            const isDir: boolean = (await fs.promises.stat(filePath)).isDirectory();
 
             if (isDir) {
                 await performDirDeletion(filePath);
             }
         }
 
-        // Check if the directory is empty after deleting subdirectories
-        const remainingFiles = await fs.promises.readdir(dirPath);
+        // Check if the directory is empty after deleting subdirectories.
+        const remainingFiles: Array<string> = await fs.promises.readdir(dirPath);
         if (remainingFiles.length === 0) {
             await fs.promises.rmdir(dirPath);
             deleted.push(dirPath);
