@@ -12,7 +12,7 @@ export async function compressDir(dirPath: string, exclude: Array<string>, metho
     let compressedFilesCount: number = 0;
     let notCompressed: Array<string> = [];
 
-    const _coreFn = async (dirPath: string, exclude: Array<string>, method: string, level: number, minRatio: number) => {
+    const performDirCompression = async (dirPath: string, exclude: Array<string>, method: string, level: number, minRatio: number) => {
         const files = await fs.promises.readdir(dirPath);
 
         const compressFile = async (filePath: string, method: string, level: number, minRatio: number) => {
@@ -51,14 +51,14 @@ export async function compressDir(dirPath: string, exclude: Array<string>, metho
             const stats = await fs.promises.stat(filePath);
 
             if (stats.isDirectory()) {
-                await _coreFn(filePath, exclude, method, level, minRatio);
+                await performDirCompression(filePath, exclude, method, level, minRatio);
             } else if (!(exclude.includes(path.extname(file)) || exclude.includes(file))) {
                 await compressFile(filePath, method, level, minRatio);
             }
         }
     };
 
-    await _coreFn(dirPath, exclude, method, level, minRatio);
+    await performDirCompression(dirPath, exclude, method, level, minRatio);
     const cdiff = process.hrtime(ct0);
     LOG(`Compressed files (${method}): ${compressedFilesCount} (${cdiff[0]}.${cdiff[1]}s) | ${notCompressed.length > 0 ? `${ANSI.color.yellow}not compressed files / above min ratio: ${notCompressed.join(", ")}` : ""}`);
 }

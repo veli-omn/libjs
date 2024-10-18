@@ -9,7 +9,7 @@ import { LOG } from "../generic/log.js";
 async function deleteEmptyDirectories(dirPath: string) {
     let deleted: Array<string> = [];
 
-    const _coreFn = async (dirPath: string) => {
+    const performDirDeletion = async (dirPath: string) => {
         const files = await fs.promises.readdir(dirPath);
         // If the directory is empty, delete it
         if (files.length === 0) {
@@ -24,7 +24,7 @@ async function deleteEmptyDirectories(dirPath: string) {
             const isDir = (await fs.promises.stat(filePath)).isDirectory();
 
             if (isDir) {
-                await _coreFn(filePath, false);
+                await performDirDeletion(filePath);
             }
         }
 
@@ -36,7 +36,7 @@ async function deleteEmptyDirectories(dirPath: string) {
         }
     };
 
-    await _coreFn(dirPath);
+    await performDirDeletion(dirPath);
 
     if (deleted.length > 0) {
         LOG(`Deleted empty directories inside ${dirPath}: ${ANSI.color.yellow}${deleted}`);

@@ -13,7 +13,7 @@ export async function syncDir(src: string, dest: string): Promise<void> {
     };
 
     // Define a recursive function to populate operations
-    const _coreFn = async (src: string, dest: string): Promise<void> => {
+    const performDirSynchronization = async (src: string, dest: string): Promise<void> => {
         const srcEntries = await fs.promises.readdir(src, { withFileTypes: true });
 
         // Get a list of files and directories in the destination directory
@@ -29,8 +29,8 @@ export async function syncDir(src: string, dest: string): Promise<void> {
                 if (!destFilesDirs.has(entry.name)) {
                     operations.dirsToCreate.push(destPath);
                 }
-                // Recursively call _coreFn for subdirectories
-                await _coreFn(srcPath, destPath);
+                // Recursively call performDirSynchronization for subdirectories
+                await performDirSynchronization(srcPath, destPath);
             } else if (entry.isFile()) {
                 const srcHash = await getFileHash(srcPath, "sha512").catch(() => null);
                 const destHash = destFilesDirs.has(entry.name) ? await getFileHash(destPath, "sha512").catch(() => null) : null;
@@ -49,19 +49,19 @@ export async function syncDir(src: string, dest: string): Promise<void> {
         }
     };
 
-    await _coreFn(src, dest);
+    await performDirSynchronization(src, dest);
 
-    // Create directories that don't exist in dest
+    // Create directories that don't exist in dest.
     for (const dirPath of operations.dirsToCreate) {
         await fs.promises.mkdir(dirPath, { recursive: true }).catch(() => {});
     }
 
-    // Delete files and directories that are not in src
+    // Delete files and directories that are not in src.
     for (const filePath of operations.filesToDelete) {
         await fs.promises.rm(filePath, { recursive: true, force: true }).catch(() => {});
     }
 
-    // Copy files with hash mismatch
+    // Copy files with hash mismatch.
     for (const { srcPath, destPath } of operations.filesToCopy) {
         await fs.promises.copyFile(srcPath, destPath).catch(() => {});
     }
