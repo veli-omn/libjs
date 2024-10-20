@@ -1,45 +1,39 @@
-export const STORAGE = {
-    local: {
-        get(name: string): unknown {
-            const item = localStorage.getItem(name);
+type StorageVariant = "localStorage" | "sessionStorage";
 
-            try {
-                return item ? JSON.parse(item) : null;
-            } catch {
-                return item;
-            }
-        },
+const logError = (variant: StorageVariant, operation: "set" | "get", err: unknown) => console.log(`STORAGE failure: <${variant.slice(0,-7)}/${operation}>`, err);
 
-        set(name: string, data: any): void {
-            try {
-                localStorage.setItem(name, JSON.stringify(data));
-            } catch {
-                localStorage.setItem(name, data);
-            }
-        },
+function storageSet(variant: StorageVariant, key: string, data: string): boolean {
+    let setStatus: boolean = true;
 
-        remove: (name: string): void => localStorage.removeItem(name)
-    },
+    try {
+        window[variant].setItem(key, JSON.stringify(data));
+    } catch (err) {
+        logError(variant, "set", err);
+        setStatus = false;
+    }
 
-    session: {
-        get(name: string): unknown {
-            const item = sessionStorage.getItem(name);
+    return setStatus;
+}
 
-            try {
-                return item ? JSON.parse(item) : null;
-            } catch {
-                return item;
-            }
-        },
+function storageGet(variant: StorageVariant, key: string): unknown {
+    const item: string | null = window[variant].getItem(key);
 
-        set(name: string, data: any): void {
-            try {
-                sessionStorage.setItem(name, JSON.stringify(data));
-            } catch {
-                sessionStorage.setItem(name, data);
-            }
-        },
-
-        remove: (name:string): void => sessionStorage.removeItem(name)
+    try {
+        const parsed: unknown = item ? JSON.parse(item) : null;
+        return parsed;
+    } catch (err) {
+        logError(variant, "get", err);
+        return null;
     }
 }
+
+const createStorageMethods = (variant: StorageVariant) => ({
+    set: (key: string, data: string) => storageSet(variant, key, data),
+    get: (key: string) => storageGet(variant, key),
+    remove: (key: string) => window[variant].removeItem(key)
+});
+
+export const STORAGE = {
+    local: createStorageMethods("localStorage"),
+    session: createStorageMethods("sessionStorage")
+};
