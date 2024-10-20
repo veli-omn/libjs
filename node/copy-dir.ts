@@ -26,7 +26,7 @@ export async function copyDir(src: string, dest: string, exclude: Array<string> 
     }
 
     if (isRootCall){
-        LOG(`Copied ${filesCount} files: ${ANSI.set("cyan", src)} -> ${ANSI.set("cyan", dest)}`);
+        LOG(`Copied ${filesCount} files: ${ANSI.setColor("cyan", src)} -> ${ANSI.setColor("cyan", dest)}`);
     }
 
     return filesCount; // Return the count for use in recursive calls.

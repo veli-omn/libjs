@@ -67,5 +67,5 @@ export async function syncDir(src: string, dest: string): Promise<void> {
         await fs.promises.copyFile(srcPath, destPath);
     }
 
-    LOG(`Synchronized folders: ${ANSI.set("cyan", src)} -> ${ANSI.set("cyan", dest)} | copied: ${operations.filesToCopy.length} file${operations.filesToCopy.length !== 1 ? "s" : ""} | deleted: ${operations.filesToDelete.length} file${operations.filesToDelete.length !== 1 ? "s" : ""}`);
+    LOG(`Synchronized folders: ${ANSI.setColor("cyan", src)} -> ${ANSI.setColor("cyan", dest)} | copied: ${operations.filesToCopy.length} file${operations.filesToCopy.length !== 1 ? "s" : ""} | deleted: ${operations.filesToDelete.length} file${operations.filesToDelete.length !== 1 ? "s" : ""}`);
 }

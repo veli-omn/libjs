@@ -1,21 +1,21 @@
-const ansiEscChar: string = "\x1b[";
+const ansiEscChar = "\x1b[";
+const ansiColors = {
+    cyan: ansiEscChar + "36m",
+    blue: ansiEscChar + "34m",
+    green: ansiEscChar + "32m",
+    yellow: ansiEscChar + "33m",
+    magenta: ansiEscChar + "35m",
+    red: ansiEscChar + "31m",
+    white: ansiEscChar + "37m",
+    black: ansiEscChar + "30m"
+}
 
 export const ANSI = {
-    ansiEscChar: <string> ansiEscChar,
-    reset: <string> ansiEscChar + "0m",
+    escChar: ansiEscChar,
+    reset: ansiEscChar + "0m",
+    color: ansiColors,
 
-    color: <{ [code: string]: string }> {
-        cyan: ansiEscChar + "36m",
-        blue: ansiEscChar + "34m",
-        green: ansiEscChar + "32m",
-        yellow: ansiEscChar + "33m",
-        magenta: ansiEscChar + "35m",
-        red: ansiEscChar + "31m",
-        white: ansiEscChar + "37m",
-        black: ansiEscChar + "30m"
-    },
-
-    set(color: string, string: string): string {
-        return `${this.color[color]}${string}${this.reset}`
+    setColor(color: keyof typeof ansiColors, string: string) {
+        return `${ANSI.color[color]}${string}${ANSI.reset}`;
     }
-}
+};

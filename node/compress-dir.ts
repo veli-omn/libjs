@@ -34,7 +34,7 @@ export async function compressDir(dirPath: string, exclude: Array<string>, metho
                     extension = "def";
                     break;
                 default:
-                    LOG(ANSI.set("cyan", `${ANSI.color.red}Unsupported compression method: ${method}`), false, "error");
+                    LOG(`Unsupported compression method: ${method}`, false, "error");
                     return;
             }
 

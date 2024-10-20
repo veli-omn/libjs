@@ -29,5 +29,5 @@ export async function deleteDirectoryContents(dirPath: string): Promise<void> {
     };
 
     await deleteDir(dirPath);
-    LOG(`Deleted contents of directory: ${ANSI.set("cyan", dirPath)}`);
+    LOG(`Deleted contents of directory: ${ANSI.setColor("cyan", dirPath)}`);
 }
