@@ -1,4 +1,4 @@
-import fs from "node:fs";
+import fs from "fs";
 
 
 export async function listFiles(dirPath: string = ".", exclude: Array<string> = []): Promise<{ listed: Array<string>, excluded: Array<string> }> {
@@ -20,10 +20,10 @@ export async function listFiles(dirPath: string = ".", exclude: Array<string> = 
 
             for (const item of items) {
                 if (item !== "." && item !== ".." && !checkIfInExc(item, exclude)) {
-                    const path = dirPath + "/" + item;
+                    const path: string = dirPath + "/" + item;
 
                     if (fs.lstatSync(path).isDirectory()) {
-                        const subFiles = await listFilesInDir(path, exclude);
+                        const subFiles: Array<string> = await listFilesInDir(path, exclude);
 
                         for (const subFile of subFiles) {
                             files.push(item + "/" + subFile);

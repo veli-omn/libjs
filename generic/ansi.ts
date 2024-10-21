@@ -15,7 +15,7 @@ export const ANSI = {
     reset: ansiEscChar + "0m",
     color: ansiColors,
 
-    setColor(color: keyof typeof ansiColors, string: string) {
+    setColor(color: keyof typeof ansiColors, string: unknown) {
         return `${ANSI.color[color]}${string}${ANSI.reset}`;
     }
 };

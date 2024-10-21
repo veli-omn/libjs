@@ -1,26 +1,25 @@
-import fs from "node:fs";
-import path from "node:path";
-import zlib from "node:zlib";
-import { ANSI } from "../generic/ansi.js";
-import { LOG } from "../generic/log.js";
+import fs from "fs";
+import path from "path";
+import zlib from "zlib";
 
 
-export async function compressDir(dirPath: string, exclude: Array<string>, method: string, level: number, minRatio: number): Promise<void> {
-    exclude = [".gz", ".br", ".def", ...exclude];
+export async function compressDir(dirPath: string, exclude: Array<string>, algorithm: string, level: number, minRatio: number) {
+    const defaultExlude: Array<string> = [".gz", ".br", ".def"];
+    exclude = [...defaultExlude, ...exclude];
 
-    const ct0: [number, number] = process.hrtime();
-    let compressedFilesCount: number = 0;
-    let notCompressed: Array<string> = [];
+    const compressed: Array<string> = [];
+    const aboveMinRatio: Array<string> = [];
+    const excluded: Array<string> = [];
 
-    const performDirCompression = async (dirPath: string, exclude: Array<string>, method: string, level: number, minRatio: number) => {
-        const files = await fs.promises.readdir(dirPath);
+    const performDirCompression = async (dirPath: string, exclude: Array<string>, algorithm: string, level: number, minRatio: number) => {
+        const files: Array<string> = await fs.promises.readdir(dirPath);
 
-        const compressFile = async (filePath: string, method: string, level: number, minRatio: number) => {
+        const compressFile = async (filePath: string, algorithm: string, level: number, minRatio: number) => {
             const fileContents: Buffer = await fs.promises.readFile(filePath);
-            let compressedContents: undefined | Buffer;
-            let extension: undefined | string;
+            let compressedContents: Buffer | undefined;
+            let extension: string | null = null;
 
-            switch (method) {
+            switch (algorithm) {
                 case "gzip":
                     compressedContents = zlib.gzipSync(fileContents, { level: level });
                     extension = "gz";
@@ -34,15 +33,14 @@ export async function compressDir(dirPath: string, exclude: Array<string>, metho
                     extension = "def";
                     break;
                 default:
-                    LOG(`Unsupported compression method: ${method}`, false, "error");
-                    return;
+                    throw new Error(`invalid compression algorithm: ${algorithm}`);
             }
 
             if (!minRatio || (compressedContents.length / fileContents.length) < minRatio) {
                 await fs.promises.writeFile(`${filePath}.${extension}`, compressedContents);
-                compressedFilesCount++;
+                compressed.push(path.basename(filePath));
             } else {
-                notCompressed.push(filePath);
+                aboveMinRatio.push(path.basename(filePath));
             }
         };
 
@@ -51,14 +49,20 @@ export async function compressDir(dirPath: string, exclude: Array<string>, metho
             const stats = await fs.promises.stat(filePath);
 
             if (stats.isDirectory()) {
-                await performDirCompression(filePath, exclude, method, level, minRatio);
+                await performDirCompression(filePath, exclude, algorithm, level, minRatio);
             } else if (!(exclude.includes(path.extname(file)) || exclude.includes(file))) {
-                await compressFile(filePath, method, level, minRatio);
+                await compressFile(filePath, algorithm, level, minRatio);
+            } else if (!defaultExlude.includes(path.extname(file))) {
+                excluded.push(path.basename(filePath));
             }
         }
     };
 
-    await performDirCompression(dirPath, exclude, method, level, minRatio);
-    const cdiff = process.hrtime(ct0);
-    LOG(`Compressed files (${method}): ${compressedFilesCount} (${cdiff[0]}.${cdiff[1]}s) | ${notCompressed.length > 0 ? `${ANSI.color.yellow}not compressed files / above min ratio: ${notCompressed.join(", ")}` : ""}`);
+    try {
+        await performDirCompression(dirPath, exclude, algorithm, level, minRatio);
+    } catch (err) {
+        throw new Error("Directory compression failure", { cause: err });
+    }
+
+    return { compressed, aboveMinRatio, excluded };
 }

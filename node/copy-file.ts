@@ -1,6 +1,6 @@
-import fs from "node:fs";
+import fs from "fs";
 
 
-export async function copyFile(srcPath: string, destPath: string): Promise<void> {
+export async function copyFile(srcPath: fs.PathLike, destPath: fs.PathLike): Promise<void> {
     await fs.promises.copyFile(srcPath, destPath);
 }

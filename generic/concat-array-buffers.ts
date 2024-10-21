@@ -19,7 +19,7 @@ export function concatArrayBuffers(...buffers: Array<ArrayBuffer>): ArrayBuffer 
 }
 
 
-// Another variants, do benchmark and export the most performant.
+// TODO: Another variant bellow, do benchmark and export the most performant.
 
 // function concatArrayBuffers(...bufs: Array<ArrayBuffer>): ArrayBuffer {
 //     const byteArray: Array<number> = [];

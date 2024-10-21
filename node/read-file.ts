@@ -1,4 +1,4 @@
-import fs from "node:fs";
+import fs from "fs";
 
 
 export async function readFile(filePath: string, encoding?: BufferEncoding): Promise<Buffer | string> {

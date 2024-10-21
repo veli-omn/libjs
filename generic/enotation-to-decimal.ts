@@ -1,15 +1,21 @@
-export function convertENotationToDecimal(num: any): string {
-    let [coefficient, exponent] = num.toString().split("e");
+export function eNotationToDecimal(num: number): string {
+    const parsedNumber: Array<string> = num.toString().split("e");
 
-    coefficient = coefficient.replace(".", "");
-    exponent = parseInt(exponent);
+    if (parsedNumber.length === 1) {
+        return parsedNumber[0];
+    }
 
-    if (exponent >= 0) {
-        const decimalPlaces = coefficient.length - 1;
-        const zerosToAdd = exponent - decimalPlaces;
+    const sign: string = parsedNumber[0][0] === "-" ? "-" : "";
+    const coefficient: string = parsedNumber[0].replace("-", "").replace(".", "");
+    const exponentValue: number = parseInt(parsedNumber[1]);
+    const decimalPlaces: number = (parsedNumber[0].split(".")[1] || "").length;
 
-        return zerosToAdd >= 0 ? coefficient + "0".repeat(zerosToAdd) : coefficient.slice(0, zerosToAdd) + "." + coefficient.slice(zerosToAdd);
+    if (exponentValue >= 0) {
+        const zerosToAdd: number = exponentValue - (coefficient.length - decimalPlaces);
+        return sign + (zerosToAdd >= 0 ? coefficient + "0".repeat(zerosToAdd) : coefficient.slice(0, exponentValue + 1) + "." + coefficient.slice(exponentValue + 1));
     } else {
-        return "0." + "0".repeat(Math.abs(exponent) - 1) + coefficient;
+        const zerosToAdd: number = Math.abs(exponentValue) - 1;
+        const leadingZeros: string = "0".repeat(zerosToAdd);
+        return sign + "0." + leadingZeros + coefficient;
     }
 }

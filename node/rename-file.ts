@@ -1,16 +1,18 @@
-import fs from "node:fs";
-import path from "node:path";
-import { ANSI } from "../generic/ansi.js";
-import { LOG } from "../generic/log.js";
+import fs from "fs";
+import path from "path";
 
 
-export async function renameFile(filePath: string, newName: string): Promise<void> {
+export async function renameFile(filePath: string, newName: string): Promise<boolean> {
+    let executionStatus: boolean = false;
+
     try {
         const directory: string = path.dirname(filePath);
         const newPath: string = path.join(directory, newName);
         await fs.promises.rename(filePath, newPath);
-        LOG(`File renamed: ${path.basename(filePath)} -> ${newName}`);
+        executionStatus = true;
     } catch (err) {
-        LOG(`${ANSI.color.red}Error renaming file: ${err}${ANSI.reset}`);
+        console.error(err);
     }
+
+    return executionStatus;
 }
