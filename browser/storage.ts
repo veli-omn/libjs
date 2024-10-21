@@ -2,7 +2,7 @@ type StorageVariant = "localStorage" | "sessionStorage";
 
 const logError = (variant: StorageVariant, operation: "set" | "get", err: unknown) => console.log(`STORAGE failure <${variant.slice(0,-7)}/${operation}>`, err);
 
-function storageSet(variant: StorageVariant, key: string, data: string): boolean {
+function storageSet(variant: StorageVariant, key: string, data: unknown): boolean {
     let executionStatus: boolean = false;
 
     try {
@@ -28,7 +28,7 @@ function storageGet(variant: StorageVariant, key: string): unknown {
 }
 
 const createStorageMethods = (variant: StorageVariant) => ({
-    set: (key: string, data: string) => storageSet(variant, key, data),
+    set: (key: string, data: unknown) => storageSet(variant, key, data),
     get: (key: string) => storageGet(variant, key),
     remove: (key: string) => window[variant].removeItem(key)
 });
