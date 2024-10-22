@@ -2,8 +2,8 @@ import { sleep } from "../generic/sleep.js"
 
 
 export class ScreenWakeLock {
-    static wakeLock: null | WakeLockSentinel = null;
-    static intervalID: undefined | number;
+    static wakeLock: WakeLockSentinel | undefined;
+    static intervalID: number | undefined;
     static wakeLockInNavigator: boolean = false;
     static isOn: boolean = false;
 
@@ -49,7 +49,7 @@ export class ScreenWakeLock {
 
         if ((this.wakeLock !== null) && !this.wakeLock?.released) {
             try {
-                await this.wakeLock.release();
+                await this.wakeLock?.release();
             } catch (err) {
                 console.debug(`Screen Wake Lock: failed to release screen wake lock |`, err);
             }

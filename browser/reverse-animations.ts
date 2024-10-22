@@ -3,4 +3,4 @@ export function reverseAnimations(element: HTMLElement, speed: number): void {
         animation.updatePlaybackRate(speed);
         animation.reverse();
     }
-};
+}
