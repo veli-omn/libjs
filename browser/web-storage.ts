@@ -33,7 +33,7 @@ const createStorageMethods = (variant: StorageVariant) => ({
     remove: (key: string) => window[variant].removeItem(key)
 });
 
-export const STORAGE = {
+export const WebStorage = {
     local: createStorageMethods("localStorage"),
     session: createStorageMethods("sessionStorage")
 };
