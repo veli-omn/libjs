@@ -1,22 +1,14 @@
 import { sleep } from "../generic/sleep.js"
 
 
-export class ScreenWakeLock {
-    static wakeLock: WakeLockSentinel | undefined;
-    static intervalID: number | undefined;
-    static wakeLockInNavigator: boolean = false;
-    static isOn: boolean = false;
+export const ScreenWakeLock = {
+    wakeLock: <WakeLockSentinel | null> null,
+    intervalID: <number> 0,
+    inNavigator: <boolean> ("wakeLock" in navigator),
+    isOn: <boolean> false,
 
-    static {
-        if (!("wakeLock" in navigator)) {
-            console.debug("Screen Wake Lock: not supported");
-        } else {
-            this.wakeLockInNavigator = true;
-        }
-    }
-
-    static async request(): Promise<void> {
-        if (!this.wakeLockInNavigator) return;
+    async request(): Promise<void> {
+        if (!this.inNavigator) return;
 
         this.isOn = true;
 
@@ -36,14 +28,14 @@ export class ScreenWakeLock {
                         }, { once: true });
                     }
                 } catch (err) {
-                    console.debug(`Screen Wake Lock: failed to acquire screen wake lock |`, err);
+                    console.debug(`Screen Wake Lock: failed to acquire |`, err);
                 }
             }, 4000);
         }
-    }
+    },
 
-    static async release(): Promise<void> {
-        if (!this.wakeLockInNavigator) return;
+    async release(): Promise<void> {
+        if (!this.inNavigator) return;
 
         this.isOn = false;
 
@@ -51,8 +43,12 @@ export class ScreenWakeLock {
             try {
                 await this.wakeLock?.release();
             } catch (err) {
-                console.debug(`Screen Wake Lock: failed to release screen wake lock |`, err);
+                console.debug(`Screen Wake Lock: failed to release |`, err);
             }
         }
     }
+}
+
+if (!ScreenWakeLock.inNavigator) {
+    console.debug("Screen Wake Lock: not supported");
 }
