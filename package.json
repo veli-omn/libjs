@@ -1,6 +1,6 @@
 {
     "name": "libjs",
-    "version": "1.5.1",
+    "version": "1.5.2",
     "scripts": {
         "update:all": "pnpm update --recursive --latest --interactive"
     },

@@ -1,29 +1,31 @@
 export class Loop {
     frequencyHz: number;
+    timerID: number;
     fn: Function;
-    loopID: number | null;
 
     constructor(frequencyHz: number, fn: Function) {
         this.frequencyHz = frequencyHz;
         this.fn = fn;
-        this.loopID = null;
+        this.timerID = 0;
     }
 
     start(): void {
-        if (!this.loopID) this.loopID = setInterval(this.fn, 1000 / this.frequencyHz);
+        if (this.timerID === 0) {
+            this.timerID = setInterval(this.fn, 1000 / this.frequencyHz);
+        }
     }
 
     stop(): void {
-        if (this.loopID) {
-            clearInterval(this.loopID);
-            this.loopID = null;
+        if (this.timerID > 0) {
+            clearInterval(this.timerID);
+            this.timerID = 0;
         }
     }
 
     changeFrequency(newFrequencyHz: number): void {
         this.frequencyHz = newFrequencyHz;
 
-        if (this.loopID) {
+        if (this.timerID) {
             this.stop();
             this.start();
         }

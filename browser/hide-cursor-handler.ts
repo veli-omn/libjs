@@ -1,4 +1,4 @@
-import { debounce } from "../generic/debounce.js"
+import { debounce } from "../generic/debounce.js";
 
 
 export class HideCursorHandler {
@@ -7,7 +7,7 @@ export class HideCursorHandler {
     listenersAC: AbortController;
     initialCursor?: string;
 
-    static eventsToListen: string[] = ["mousemove", "mousedown", "keydown"];
+    static eventsToListen: Array<string> = ["mousemove", "mousedown", "keydown"];
 
     constructor(node: HTMLElement, time: number = 2000) {
         this.node = node;
