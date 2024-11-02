@@ -1,3 +1,6 @@
+const storeName: string = "entries";
+let interscopeMapDB: IDBDatabase;
+
 function wrapRequest<T>(request: IDBRequest<T>): Promise<T> {
     return new Promise<T>((resolve, reject) => {
         request.onsuccess = () => resolve(request.result);
@@ -5,20 +8,44 @@ function wrapRequest<T>(request: IDBRequest<T>): Promise<T> {
     });
 }
 
-const openRequest: IDBOpenDBRequest = indexedDB.open("<interscope-map>");
-const storeName: string = "entries";
-let interscopeMapDB: IDBDatabase;
+async function initDB() {
+    const openRequest: IDBOpenDBRequest = indexedDB.open("<interscope-map>");
+    openRequest.onupgradeneeded = () => openRequest.result.createObjectStore(storeName);
+    interscopeMapDB = await wrapRequest(openRequest);
+}
 
-openRequest.onupgradeneeded = () => openRequest.result.createObjectStore(storeName);
-wrapRequest(openRequest).then((db) => interscopeMapDB = db);
+function performOperation(operation: "set" | "get" | "delete" | "clear", key?: IDBValidKey, value?: unknown): Promise<IDBValidKey | undefined | unknown> {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (!(interscopeMapDB instanceof IDBDatabase)) await initDB();
 
-function getStore(mode: IDBTransactionMode = "readwrite"): IDBObjectStore {
-    return interscopeMapDB.transaction(storeName, mode).objectStore(storeName);
+            const store = interscopeMapDB.transaction(storeName, operation !== "get" ? "readwrite" : "readonly").objectStore(storeName);
+            let request: IDBRequest;
+
+            switch (operation) {
+                case "set":
+                    request = store.put(value, key);
+                    break;
+                case "get":
+                    request = store.get(key as IDBValidKey);
+                    break;
+                case "delete":
+                    request = store.delete(key as IDBValidKey);
+                    break;
+                case "clear":
+                    request = store.clear();
+            }
+
+            wrapRequest(request).then((result) => resolve(result)).catch((err) => reject(err));
+        } catch (err) {
+            reject(err);
+        }
+    });
 }
 
 export const InterscopeMap = {
-    set: (key: IDBValidKey, value: unknown): Promise<IDBValidKey> => wrapRequest(getStore().put(value, key)),
-    get: (key: IDBValidKey): Promise<unknown> => wrapRequest(getStore("readonly").get(key)),
-    delete: (key: IDBValidKey): Promise<undefined> => wrapRequest(getStore().delete(key)),
-    clear: (): Promise<undefined> => wrapRequest(getStore().clear())
+    set: (key: IDBValidKey, value: unknown) => <Promise<IDBValidKey>> performOperation("set", key, value),
+    get: (key: IDBValidKey) => <Promise<unknown>> performOperation("get", key),
+    delete: (key: IDBValidKey) => <Promise<undefined>> performOperation("delete", key),
+    clear: (): Promise<undefined>  => <Promise<undefined>> performOperation("clear")
 };
