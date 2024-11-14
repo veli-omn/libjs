@@ -3,41 +3,42 @@ import { debounce } from "../generic/debounce.js";
 
 export class HideCursorHandler {
     node: HTMLElement;
-    hideCursor: ReturnType<typeof debounce>;
-    listenersAC: AbortController;
-    initialCursor?: string;
+    listenersAC!: AbortController;
+    initialCursor: string;
+    hideAction!: ReturnType<typeof debounce>;
 
     static eventsToListen: Array<string> = ["mousemove", "mousedown", "keydown"];
 
-    constructor(node: HTMLElement, time: number = 2000) {
+    constructor(node: HTMLElement) {
         this.node = node;
+        this.initialCursor = node.style.cursor;
+    }
+
+    hide = (time: number = 2000): void => {
         this.listenersAC = new AbortController();
-
-        this.hideCursor = debounce((): void => {
-            this.initialCursor = node.style.cursor;
+        this.hideAction = debounce((): void => {
             this.node.style.cursor = "none";
-
-            for (const event of HideCursorHandler.eventsToListen) {
-                this.node?.addEventListener(event, (): void => this.revertCursor(), { once: true, signal: this.listenersAC.signal });
-            }
         }, time);
 
         for (const event of HideCursorHandler.eventsToListen) {
-            this.node?.addEventListener(event, (): void => this.hideCursor.execute(), { signal: this.listenersAC.signal });
+            this.node.addEventListener(event, (): void => {
+                this.#show();
+                this.hideAction.execute();
+            }, { signal: this.listenersAC.signal });
         }
 
-        this.hideCursor.execute();
+        this.hideAction.execute();
     }
 
-    revertCursor = (): void => {
+    #show = (): void => {
         if ((typeof this.initialCursor === "string") && (this.node.style.cursor === "none")) {
             this.node.style.cursor = this.initialCursor;
         }
     }
 
-    remove(): void {
-        this.listenersAC.abort();
-        this.hideCursor.clear();
-        this.revertCursor();
+    revert = (): void => {
+        this.listenersAC?.abort();
+        this.hideAction?.clear();
+        this.#show();
     }
 }
