@@ -20,8 +20,8 @@ async function getStore(mode: IDBTransactionMode = "readwrite"): Promise<IDBObje
 }
 
 export const InterscopeMap = {
-    set: async (key: IDBValidKey, value: unknown): Promise<IDBValidKey> => wrapRequest((await getStore()).put(value, key)),
-    get: async (key: IDBValidKey): Promise<unknown> => wrapRequest((await getStore("readonly")).get(key)),
+    set: async (key: IDBValidKey, value: any): Promise<IDBValidKey> => wrapRequest((await getStore()).put(value, key)),
+    get: async (key: IDBValidKey): Promise<any> => wrapRequest((await getStore("readonly")).get(key)),
     delete: async (key: IDBValidKey): Promise<undefined> => wrapRequest((await getStore()).delete(key)),
     clear: async (): Promise<undefined> => wrapRequest((await getStore()).clear())
 };
