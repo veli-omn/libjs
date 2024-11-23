@@ -1,5 +1,9 @@
-export function* range(start: number, end: number, step: number = 1): Generator<number> {
+export function range(start: number, end: number, step: number = 1): Array<number> {
+    let rangeArray: Array<number> = [];
+
     for (let i = start; i <= end; i += step) {
-        yield i;
+        rangeArray.push(i);
     }
+
+    return rangeArray;
 }
