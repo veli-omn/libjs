@@ -19,12 +19,12 @@ export type HTTPResponseParseOption = "json" | "arrayBuffer" | "text";
 
 export async function HTTPRequest<T>(
     URL: string,
+    parseResponse?: HTTPResponseParseOption | null,
     params?: HTTPRequestParameters | null,
-    parseResponse?: HTTPResponseParseOption,
     fetchFn: Function = fetch
 ): Promise<HTTPRequestResult<T>> {
-    const bodyIsObject = typeof params?.body === "object";
-    const contentTypeHeaderIsSpecified = params?.headers && "Content-Type" in params?.headers;
+    const bodyIsObject: boolean = params?.body !== null && typeof params?.body === "object";
+    const contentTypeHeaderIsSpecified: boolean = !!(params?.headers && "Content-Type" in params?.headers);
     const requestResult: HTTPRequestResult<T> = {
         error: {
             type: null
@@ -33,15 +33,23 @@ export async function HTTPRequest<T>(
         rawResponse: null
     };
 
+    console.log(`DEV LOG: bodyIsObject`, bodyIsObject); // Dev log, remove in production.
+    console.log(`DEV LOG: contentTypeHeaderIsSpecified`, contentTypeHeaderIsSpecified); // Dev log, remove in production.
+    console.log(`DEV LOG: http params`, JSON.stringify(params, null, 4)); // Dev log, remove in production.
+
+
     try {
-        const response: Response = await fetchFn(URL, {
+        const parsedParams = {
             method: params?.method || "GET",
             headers: {
                 ...params?.headers,
                 ...((bodyIsObject && !contentTypeHeaderIsSpecified) && { "Content-Type": "application/json" })
             },
-            body: bodyIsObject ? JSON.stringify(params.body) : params?.body
-        });
+            body: bodyIsObject ? JSON.stringify((params as any).body) : params?.body
+        };
+        console.log(`DEV LOG: parsedParams`, JSON.stringify(parsedParams, null, 4)); // Dev log, remove in production.
+
+        const response: Response = await fetchFn(URL, parsedParams);
 
         if (!response.ok) {
             requestResult.error.type = "external";
