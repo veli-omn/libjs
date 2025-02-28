@@ -33,11 +33,6 @@ export async function HTTPRequest<T>(
         rawResponse: null
     };
 
-    console.log(`DEV LOG: bodyIsObject`, bodyIsObject); // Dev log, remove in production.
-    console.log(`DEV LOG: contentTypeHeaderIsSpecified`, contentTypeHeaderIsSpecified); // Dev log, remove in production.
-    console.log(`DEV LOG: http params`, JSON.stringify(params, null, 4)); // Dev log, remove in production.
-
-
     try {
         const parsedParams = {
             method: params?.method || "GET",
@@ -47,7 +42,6 @@ export async function HTTPRequest<T>(
             },
             body: bodyIsObject ? JSON.stringify((params as any).body) : params?.body
         };
-        console.log(`DEV LOG: parsedParams`, JSON.stringify(parsedParams, null, 4)); // Dev log, remove in production.
 
         const response: Response = await fetchFn(URL, parsedParams);
 
