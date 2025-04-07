@@ -2,8 +2,10 @@ import fs from "fs";
 import path from "path";
 import zlib from "zlib";
 
+export type CompressAlgorithms = "gzip" | "brotli" | "deflate"
 
-export async function compressDir(dirPath: string, exclude: Array<string>, algorithm: string, level: number, minRatio: number) {
+
+export async function compressDir(dirPath: string, exclude: Array<string>, algorithm: CompressAlgorithms, level: number, minRatio: number) {
     const defaultExlude: Array<string> = [".gz", ".br", ".def"];
     exclude = [...defaultExlude, ...exclude];
 
