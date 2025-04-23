@@ -2,6 +2,7 @@ export interface HTTPRequestParameters {
     method?: "GET" | "POST" | "PUT" | "UPDATE" | "DELETE";
     headers?: object;
     body?: object;
+    credentials?: "omit" | "same-origin" | "include";
 }
 
 export interface HTTPRequestResult<T> {
@@ -40,7 +41,8 @@ export async function HTTPRequest<T>(
                 ...params?.headers,
                 ...((bodyIsObject && !contentTypeHeaderIsSpecified) && { "Content-Type": "application/json" })
             },
-            body: bodyIsObject ? JSON.stringify((params as any).body) : params?.body
+            ...(params?.body && { body: bodyIsObject ? JSON.stringify(params.body) : params.body }),
+            ...(params?.credentials && { credentials: params.credentials })
         };
 
         const response: Response = await fetchFn(URL, parsedParams);
