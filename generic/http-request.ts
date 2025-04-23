@@ -35,7 +35,7 @@ export async function HTTPRequest<T>(
 
     try {
         const parsedParams = {
-            method: params?.method || "GET",
+            method: params?.method || (params?.body && "POST") || "GET",
             headers: {
                 ...params?.headers,
                 ...((bodyIsObject && !contentTypeHeaderIsSpecified) && { "Content-Type": "application/json" })
