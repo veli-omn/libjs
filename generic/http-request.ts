@@ -10,7 +10,7 @@ export interface HTTPRequestResult<T> {
         code?: number;
         text?: string;
         data?: unknown;
-    },
+    };
     parsedData: T | null;
     rawResponse: Response | null;
 }
@@ -19,8 +19,8 @@ export type HTTPResponseParseOption = "json" | "arrayBuffer" | "text";
 
 export async function HTTPRequest<T>(
     URL: string,
-    parseResponse?: HTTPResponseParseOption | null,
     params?: HTTPRequestParameters | null,
+    parseResponse?: HTTPResponseParseOption | null,
     fetchFn: Function = fetch
 ): Promise<HTTPRequestResult<T>> {
     const bodyIsObject: boolean = params?.body !== null && typeof params?.body === "object";
