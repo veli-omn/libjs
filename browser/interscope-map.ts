@@ -54,15 +54,8 @@ async function performStoreOperation<T>(
 }
 
 export const InterscopeMap = {
-    set: (key: IDBValidKey, value: any) =>
-        performStoreOperation("readwrite", store => store.put(value, key)),
-
-    get: (key: IDBValidKey) =>
-        performStoreOperation("readonly",  store => store.get(key)),
-
-    delete: (key: IDBValidKey) =>
-        performStoreOperation("readwrite", store => store.delete(key)),
-
-    clear: () =>
-        performStoreOperation("readwrite", store => store.clear()),
+    set: (key: IDBValidKey, value: any) => performStoreOperation("readwrite", (store) => store.put(value, key)),
+    get: (key: IDBValidKey) => performStoreOperation("readonly",  (store) => store.get(key)),
+    delete: (key: IDBValidKey) => performStoreOperation("readwrite", (store) => store.delete(key)),
+    clear: () => performStoreOperation("readwrite", (store) => store.clear())
 };
