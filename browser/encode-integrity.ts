@@ -2,7 +2,7 @@ import { concatArrayBuffers } from "../generic/concat-array-buffers.js";
 import { getHashOfArrayBuffer } from "./get-hash-of-array-buffer.js";
 
 
-export async function encodeIntegrity(data: ArrayBuffer, hashAlgorithm: string = "SHA-256"): Promise<ArrayBuffer> {
+export async function encodeIntegrity(data: ArrayBufferLike, hashAlgorithm: string = "SHA-256"): Promise<ArrayBufferLike> {
     try {
         if (!(data instanceof ArrayBuffer)) {
             throw new TypeError("input data must be an ArrayBuffer");
@@ -33,7 +33,7 @@ export async function encodeIntegrity(data: ArrayBuffer, hashAlgorithm: string =
         const hashFlagBuffer: Uint8Array = new Uint8Array([hashFlag]);
         const hashBuffer: ArrayBuffer = await getHashOfArrayBuffer(data, hashAlgorithm);
 
-        return concatArrayBuffers(lengthBuffer, hashFlagBuffer, hashBuffer, data);
+        return concatArrayBuffers(lengthBuffer, hashFlagBuffer.buffer, hashBuffer, data);
     } catch (err) {
         throw new Error("Integrity encoding failure", { cause: err });
     }

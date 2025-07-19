@@ -1,4 +1,4 @@
-export function concatArrayBuffers(...buffers: Array<ArrayBuffer>): ArrayBuffer {
+export function concatArrayBuffers(...buffers: Array<ArrayBufferLike>): ArrayBufferLike {
     let concatedByteLength: number = 0;
 
     for (const buff of buffers) {

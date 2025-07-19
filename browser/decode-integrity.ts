@@ -1,4 +1,4 @@
-import { arraysAreEqual } from "../generic/arrays-are-equal.js";
+import { areArraysEqual } from "../generic/are-arrays-equal.js";
 import { getHashOfArrayBuffer } from "./get-hash-of-array-buffer.js";
 
 
@@ -50,7 +50,7 @@ export async function decodeIntegrity(encodedData: ArrayBuffer): Promise<ArrayBu
 
         const computedHashOfData: Uint8Array = new Uint8Array(await getHashOfArrayBuffer(data, hashAlgorithm));
 
-        if (!arraysAreEqual(hashOfData, computedHashOfData)) {
+        if (!areArraysEqual(hashOfData, computedHashOfData)) {
             throw new Error("hash mismatch");
         }
 
