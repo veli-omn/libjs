@@ -11,7 +11,6 @@ export async function decodeHashIndex(encodedHashIndex: ArrayBuffer): Promise<Ar
         const hashLength: number = encodedHashIndexView.getUint16(0, false);
         let offset: number = 2;
 
-
         while (offset < encodedHashIndex.byteLength) {
             const filePathLength: number = encodedHashIndexView.getUint16(offset, false);
             offset += 2;

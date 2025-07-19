@@ -3,7 +3,9 @@ export function getNthFibonacci(n: number): bigint {
     let b: bigint = 1n;
     let c: bigint;
 
-    if (n <= 0) return 0n;
+    if (n <= 0) {
+        return 0n;
+    }
 
     for (let i = 2n; i <= n; i++) {
         c = a + b;

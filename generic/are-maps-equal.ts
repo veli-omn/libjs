@@ -1,4 +1,4 @@
-export function mapsAreEqual(map0: Map<unknown, unknown>, map1: Map<unknown, unknown>): boolean {
+export function areMapsEqual(map0: Map<unknown, unknown>, map1: Map<unknown, unknown>): boolean {
     if (map0.size !== map1.size) {
         return false;
     }

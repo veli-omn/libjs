@@ -1,6 +1,10 @@
 type StorageVariant = "localStorage" | "sessionStorage";
 
-const logError = (variant: StorageVariant, operation: "set" | "get", err: unknown) => console.log(`STORAGE failure <${variant.slice(0,-7)}/${operation}>`, err);
+const logError = (
+    variant: StorageVariant,
+    operation: "set" | "get",
+    err: unknown
+) => console.log(`STORAGE failure <${variant.slice(0,-7)}/${operation}>`, err);
 
 function storageSet(variant: StorageVariant, key: string, data: unknown): boolean {
     let executionStatus: boolean = false;
