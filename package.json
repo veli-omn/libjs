@@ -1,6 +1,6 @@
 {
     "name": "libjs",
-    "version": "1.8.1",
+    "version": "1.8.31",
     "scripts": {},
     "type": "module",
     "devDependencies": {
